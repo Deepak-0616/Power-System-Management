@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Monthly Data</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html">Dashboard</a>
+  <a href="upload.html">Upload</a>
+  <a href="predict.html">Predict</a>
+  <a href="validate.html">Validate</a>
+</div>
+
+<div class="page">
+  <h2>Upload Monthly Dataset</h2>
+
+  <input id="month" placeholder="2022_01">
+  <input type="file" id="file">
+  <button onclick="uploadDataset()">Upload</button>
+
+  <div class="panel">
+    <h3>Uploaded Months</h3>
+    <ul id="datasetList"></ul>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
