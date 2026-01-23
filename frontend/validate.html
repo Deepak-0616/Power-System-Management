@@ -20,13 +20,31 @@
 <div class="page">
   <h2>Validate Actual vs Predicted Data</h2>
 
-  <input id="validateMonth" placeholder="2022_04">
+  <input id="validateMonth" placeholder="2025_04">
   <input type="file" id="actualFile">
-  <button onclick="validateData()">Validate</button>
+
+  <button type="button" id="validateBtn">Validate</button>
 
   <div id="validateResult" class="result"></div>
+
+  <!-- ✅ FORCE SIZE -->
+  <canvas id="errorChart" width="600" height="300"></canvas>
 </div>
 
+<!-- ✅ LOAD CHART.JS FIRST -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ✅ LOAD APP LOGIC -->
 <script src="js/app.js"></script>
+
+<!-- ✅ BIND AFTER DOM IS READY -->
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    document
+      .getElementById("validateBtn")
+      .addEventListener("click", validateData);
+  });
+</script>
+
 </body>
 </html>

@@ -16,24 +16,42 @@ THRESHOLD = float(open(THRESHOLD_PATH).read())
 TIMESTEPS = 24
 
 def make_sequences(data):
-    return np.array([data[i:i+TIMESTEPS] for i in range(len(data)-TIMESTEPS)])
+    return np.array([data[i:i + TIMESTEPS] for i in range(len(data) - TIMESTEPS)])
 
 def generate_predicted_dataset(uploaded_files, output_path):
     dfs = [pd.read_csv(f) for f in uploaded_files]
-    data = pd.concat(dfs).values
-    scaled = scaler.fit_transform(data)
+
+    # ✅ FORCE CONSISTENT FEATURES
+    data = pd.concat(dfs, ignore_index=True)
+
+    REQUIRED_COLUMNS = ["voltage", "current", "frequency", "power"]
+
+    # 🔒 HARD COLUMN CHECK
+    data = data[REQUIRED_COLUMNS]
+
+    scaled = scaler.transform(data.values)
 
     X = make_sequences(scaled)
     reconstructed = model.predict(X)
 
     predicted = reconstructed.mean(axis=1)
-    pd.DataFrame(predicted).to_csv(output_path, index=False)
+
+    df = pd.DataFrame(predicted, columns=REQUIRED_COLUMNS)
+    df.to_csv(output_path, index=False)
+
 
 def validate_actual_vs_predicted(actual_csv, predicted_csv):
-    actual = pd.read_csv(actual_csv).values
-    predicted = pd.read_csv(predicted_csv).values
+    actual = pd.read_csv(actual_csv)
+    predicted = pd.read_csv(predicted_csv)
 
-    length = min(len(actual), len(predicted))
-    error = np.mean(np.abs(actual[:length] - predicted[:length]))
+    min_len = min(len(actual), len(predicted))
+    actual = actual.iloc[:min_len]
+    predicted = predicted.iloc[:min_len]
 
-    return error, error > THRESHOLD
+    actual_s = scaler.transform(actual.values)
+    predicted_s = scaler.transform(predicted.values)
+
+    deviation = np.mean(np.abs(actual_s - predicted_s))
+
+    # ✅ RETURN PURE PYTHON TYPES
+    return float(deviation), bool(deviation > THRESHOLD)

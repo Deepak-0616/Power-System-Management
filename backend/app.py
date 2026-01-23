@@ -1,7 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from model_utils import generate_predicted_dataset, validate_actual_vs_predicted
+from model_utils import (
+    generate_predicted_dataset,
+    validate_actual_vs_predicted,
+    THRESHOLD
+)
 
 app = Flask(__name__)
 CORS(app)
@@ -41,29 +45,49 @@ def generate():
 
 @app.route("/api/validate", methods=["POST"])
 def validate():
-    if SYSTEM["halted"]:
-        return jsonify({"error": "SYSTEM HALTED"}), 403
+    try:
+        if SYSTEM["halted"]:
+            return jsonify({"error": "SYSTEM HALTED"}), 403
 
-    f = request.files["file"]
-    month = request.form["month"]
-    actual_path = f"{ACTUAL}/{month}.csv"
-    f.save(actual_path)
+        f = request.files.get("file")
+        month = request.form.get("month")
 
-    predicted_path = f"{PREDICTED}/predicted_{month}.csv"
-    error, attack = validate_actual_vs_predicted(actual_path, predicted_path)
+        if not f or not month:
+            return jsonify({"error": "Missing file or month"}), 400
 
-    if attack:
-        SYSTEM["halted"] = True
+        actual_path = f"{ACTUAL}/{month}.csv"
+        f.save(actual_path)
 
-    return jsonify({
-        "error": error,
-        "attack": attack,
-        "halted": SYSTEM["halted"]
-    })
+        predicted_path = f"{PREDICTED}/predicted_{month}.csv"
+        if not os.path.exists(predicted_path):
+            return jsonify({
+                "error": f"Predicted dataset not found for {month}"
+            }), 404
+
+        error, attack = validate_actual_vs_predicted(actual_path, predicted_path)
+
+        if attack:
+            SYSTEM["halted"] = True
+
+        return jsonify({
+    "error": float(round(error, 6)),
+    "threshold": float(THRESHOLD),
+    "attack": bool(attack),
+    "halted": bool(SYSTEM["halted"])
+})
+
+
+    except Exception as e:
+        print("VALIDATION ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/state")
 def state():
-    return jsonify(SYSTEM)
+    return jsonify({
+        "halted": bool(SYSTEM["halted"])
+    })
+
 
 if __name__ == "__main__":
     app.run(debug=True)
