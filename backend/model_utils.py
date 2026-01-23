@@ -20,13 +20,9 @@ def make_sequences(data):
 
 def generate_predicted_dataset(uploaded_files, output_path):
     dfs = [pd.read_csv(f) for f in uploaded_files]
-
-    # ✅ FORCE CONSISTENT FEATURES
     data = pd.concat(dfs, ignore_index=True)
 
     REQUIRED_COLUMNS = ["voltage", "current", "frequency", "power"]
-
-    # 🔒 HARD COLUMN CHECK
     data = data[REQUIRED_COLUMNS]
 
     scaled = scaler.transform(data.values)
@@ -34,9 +30,12 @@ def generate_predicted_dataset(uploaded_files, output_path):
     X = make_sequences(scaled)
     reconstructed = model.predict(X)
 
-    predicted = reconstructed.mean(axis=1)
+    predicted_scaled = reconstructed.mean(axis=1)
 
-    df = pd.DataFrame(predicted, columns=REQUIRED_COLUMNS)
+    # ✅ CONVERT BACK TO REAL UNITS
+    predicted_real = scaler.inverse_transform(predicted_scaled)
+
+    df = pd.DataFrame(predicted_real, columns=REQUIRED_COLUMNS)
     df.to_csv(output_path, index=False)
 
 

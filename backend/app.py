@@ -88,6 +88,10 @@ def state():
         "halted": bool(SYSTEM["halted"])
     })
 
+@app.route("/api/reset", methods=["POST"])
+def reset_system():
+    SYSTEM["halted"] = False
+    return jsonify({"status": "system reset"})
 
 if __name__ == "__main__":
     app.run(debug=True)
